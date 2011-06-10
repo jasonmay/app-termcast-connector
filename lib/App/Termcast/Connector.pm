@@ -60,10 +60,11 @@ has metadata_cb => (
 );
 
 sub dispatch {
-    my $self = shift;
+    my $self   = shift;
     my ($json) = shift;
+    my %args   = @_;
 
-    my $data = JSON::decode_json($json);
+    my $data = $args{decoded} ? $json : JSON::decode_json($json);
 
     $self->handle_notice($data) if $data->{notice};
     $self->handle_response($data) if $data->{response};
