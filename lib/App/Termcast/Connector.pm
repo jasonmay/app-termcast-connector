@@ -8,13 +8,13 @@ use JSON ();
 has manager_socket_path => (
     is       => 'ro',
     isa      => 'Str',
-    required => 1,
 );
 
 has manager_socket => (
     is      => 'ro',
-    isa     => 'Str',
+    isa     => 'IO::Socket::UNIX',
     builder => '_build_manager_socket',
+    lazy    => 1,
 );
 
 sub _build_manager_socket {
@@ -61,9 +61,12 @@ has metadata_cb => (
 
 sub dispatch {
     my $self = shift;
+    my ($json) = shift;
 
-    $self->handle_notice(@_);
-    $self->handle_response(@_);
+    my $data = JSON::decode_json($json);
+
+    $self->handle_notice($data) if $data->{notice};
+    $self->handle_response($data) if $data->{response};
 }
 
 sub handle_notice {
@@ -76,13 +79,13 @@ sub handle_notice {
         }
     }
     elsif ($data->{notice} eq 'disconnect') {
-       if ($self->connect_cb) {
-            $self->connect_cb->($self, $data->{session_id});
-        }
+       if ($self->disconnect_cb) {
+           $self->disconnect_cb->($self, $data->{session_id});
+       }
     }
     elsif ($data->{notice} eq 'metadata') {
         if ($self->metadata_cb) {
-            $self->metadata_cb->($self, $data->{session_id});
+            $self->metadata_cb->($self, $data->{session_id}, $data->{metadata});
         }
     }
 }
@@ -99,7 +102,7 @@ sub handle_response {
     }
 }
 
-sub create_socket {
+sub make_socket {
     my $self = shift;
     my ($args) = @_;
 
