@@ -4,6 +4,7 @@ use Moose;
 
 use IO::Socket::UNIX;
 use JSON ();
+use Try::Tiny;
 
 has manager_socket_path => (
     is       => 'ro',
@@ -59,15 +60,42 @@ has metadata_cb => (
     writer => 'register_metadata_callback',
 );
 
+has json => (
+    is  => 'ro',
+    isa => 'JSON',
+    default => sub { JSON->new },
+);
+
 sub dispatch {
     my $self   = shift;
     my ($json) = shift;
     my %args   = @_;
 
-    my $data = $args{decoded} ? $json : JSON::decode_json($json);
+    my @data = $args{decoded} ? ($json) : $self->json->incr_parse($json)
+        or return;
 
-    $self->handle_notice($data) if $data->{notice};
-    $self->handle_response($data) if $data->{response};
+    $self->_handle_ref($_) for @data;
+}
+
+sub _decode {
+    my $self = shift;
+    my ($json) = @_;
+
+    return try { $self->json->incr_parse($json) }
+        catch { warn $_; $self->json->incr_skip };
+}
+
+
+sub _handle_ref {
+    my $self = shift;
+    my ($data) = @_;
+
+    if ($data->{notice}) {
+        $self->handle_notice($data);
+    }
+    elsif ($data->{response}) {
+        $self->handle_response($data);
+    }
 }
 
 sub handle_notice {
