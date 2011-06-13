@@ -189,14 +189,14 @@ sub _handle_ref {
     my ($data) = @_;
 
     if ($data->{notice}) {
-        $self->handle_notice($data);
+        $self->_handle_notice($data);
     }
     elsif ($data->{response}) {
-        $self->handle_response($data);
+        $self->_handle_response($data);
     }
 }
 
-sub handle_notice {
+sub _handle_notice {
     my $self = shift;
     my $data = shift;
 
@@ -217,7 +217,7 @@ sub handle_notice {
     }
 }
 
-sub handle_response {
+sub _handle_response {
     my $self = shift;
     my $data = shift;
 
