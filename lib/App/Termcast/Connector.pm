@@ -123,7 +123,7 @@ has json => (
     default => sub { JSON->new },
 );
 
-=meth request_sessions
+=method request_sessions
 
   Usage: $connector->request_sessions
 
@@ -147,7 +147,7 @@ sub request_sessions {
     $socket->syswrite($req_string);
 }
 
-=meth dispatch
+=method dispatch
 
   Usage: $connector->dispatch($input);
 
@@ -229,7 +229,7 @@ sub handle_response {
     }
 }
 
-=meth make_socket
+=method make_socket
 
   Usage: $connector->dispatch($input);
 
